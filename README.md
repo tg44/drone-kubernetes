@@ -83,6 +83,39 @@ This more complex example demonstrates how to deploy to several environments bas
                 branch: [ master ]
 ```
 
+## Debuging
+
+For debugging you firstly need to know if the kubectl inside the container is connecting to your cluster or not.
+Easiest way to find this out to compare your [local kubectl config](https://kubernetes.io/docs/tasks/tools/install-kubectl/) `~/.kube/config` file with the generated one.
+
+The generated kube conf will be
+```yaml
+    apiVersion: v1
+    clusters:
+    - cluster:
+        server: ${kubernetes_server}
+        #possible insecure-skip-tls-verify: true or cert settings
+      name: default
+    contexts:
+    - context:
+        cluster: default
+        user: ${kubernetes_user}
+      name: default
+    current-context: default
+    kind: Config
+    preferences: {}
+    users:
+    - name: ${kubernetes_user}
+      user:
+        token: ${kubernetes_token}
+```
+
+After that the script calls the following script for every deployment+container combination:
+```bash
+kubectl -n ${namespace} set image deployment/${deployment} \
+  ${container}=${repo}:${tag}
+```
+
 ## Required secrets
 
 ```bash
@@ -98,6 +131,7 @@ This more complex example demonstrates how to deploy to several environments bas
 
 When using TLS Verification, ensure Server Certificate used by kubernetes API server 
 is signed for SERVER url ( could be a reason for failures if using aliases of kubernetes cluster )
+If you have valid ssl, you can use the `kubernetes_skip_insecure: true` flag too.
 
 ## How to get token
 1. After deployment inspect you pod for name of (k8s) secret with **token** and **ca.crt**
